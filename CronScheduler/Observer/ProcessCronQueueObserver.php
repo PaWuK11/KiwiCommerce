@@ -14,6 +14,7 @@
 
 namespace KiwiCommerce\CronScheduler\Observer;
 
+use IntlDateFormatter;
 use Magento\Cron\Model\Schedule;
 use Magento\Framework\App\State;
 use Magento\Framework\Console\Cli;
@@ -120,6 +121,7 @@ class ProcessCronQueueObserver extends \Magento\Cron\Observer\ProcessCronQueueOb
      */
     protected function _runJob($scheduledTime, $currentTime, $jobConfig, $schedule, $groupId)
     {
+        $formatter = new IntlDateFormatter('en_US', IntlDateFormatter::LONG, IntlDateFormatter::NONE);
         $jobCode = $schedule->getJobCode();
         $scheduleLifetime = $this->getCronGroupConfigurationValue($groupId, self::XML_PATH_SCHEDULE_LIFETIME);
         $scheduleLifetime = $scheduleLifetime * self::SECONDS_IN_MINUTE;
@@ -144,7 +146,7 @@ class ProcessCronQueueObserver extends \Magento\Cron\Observer\ProcessCronQueueOb
             );
         }
 
-        $schedule->setExecutedAt(strftime('%Y-%m-%d %H:%M:%S', $this->dateTime->gmtTimestamp()))->save();
+        $schedule->setExecutedAt($formatter->format($this->dateTime->gmtTimestamp()))->save();
 
         $this->startProfiling();
         try {
@@ -176,8 +178,7 @@ class ProcessCronQueueObserver extends \Magento\Cron\Observer\ProcessCronQueueOb
         $schedule->setStatus(
             Schedule::STATUS_SUCCESS
         )->setFinishedAt(
-            strftime(
-                '%Y-%m-%d %H:%M:%S',
+            $formatter->format(
                 $this->dateTime->gmtTimestamp()
             )
         );
