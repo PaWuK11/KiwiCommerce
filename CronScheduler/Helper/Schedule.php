@@ -14,6 +14,8 @@
 
 namespace KiwiCommerce\CronScheduler\Helper;
 
+use IntlDateFormatter;
+
 /**
  * Class Schedule
  * @package KiwiCommerce\CronScheduler\Helper
@@ -122,10 +124,11 @@ class Schedule extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function filterTimeInput($time)
     {
+        $formatter = new IntlDateFormatter('en_US', IntlDateFormatter::LONG, IntlDateFormatter::NONE);
         $matches = [];
         preg_match('/(\d+-\d+-\d+)T(\d+:\d+)/', $time, $matches);
         $time = $matches[1] . " " . $matches[2];
-        return strftime('%Y-%m-%d %H:%M:00', strtotime($time));
+        return $formatter->format(strtotime($time));
     }
 
     /**
@@ -135,12 +138,12 @@ class Schedule extends \Magento\Framework\App\Helper\AbstractHelper
     public function getLastCronStatusMessage()
     {
         $magentoVersion = $this->getMagentoversion();
-        if (version_compare($magentoVersion, "2.2.0") >= 0) {
+        if (version_compare($magentoVersion, "2.4.5") >= 0) {
             $currentTime = $this->datetime->date('U');
         } else {
             $currentTime = (int)$this->datetime->date('U') + $this->datetime->getGmtOffset('hours') * 60 * 60;
         }
-        $lastCronStatus = strtotime($this->scheduleCollectionFactory->create()->getLastCronStatus());
+        $lastCronStatus = strtotime($this->scheduleCollectionFactory->create()->getLastCronStatus() ?? '');
         if ($lastCronStatus != null) {
             $diff = floor(($currentTime - $lastCronStatus) / 60);
             if ($diff > 5) {
